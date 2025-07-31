@@ -25,50 +25,48 @@ function App() {
   const currency = countrySettings[country].currency;
   const minSalary = countrySettings[country].minSalary;
 
-  const [dataPrimary, setDataPrimary] = useState({
+  const [primaryData, setPrimaryData] = useState({
     machineCost: 80000,
-    installCost: 5000,
-    speed: 30,
-    hours: 8,
+    installCost: 10000,
+    speed: 500,
+    hours: 16,
     days: 22,
     oee: 85,
-    unitsPerBox: 10,
-    pricePerBox: 1.5,
     materialCost: 0.02,
     laborCost: minSalary,
     energyCost: 500,
     maintenanceCost: 300,
   });
 
-  const [dataSecondary, setDataSecondary] = useState({
+  const [secondaryData, setSecondaryData] = useState({
     machineCost: 50000,
-    installCost: 3000,
-    hours: 8,
+    installCost: 5000,
+    hours: 16,
     days: 22,
     unitsPerBox: 12,
-    pricePerBox: 1.8,
-    groupings: 5,
-    oee: 80,
+    pricePerBox: 1.5,
+    oee: 85,
     laborCost: minSalary,
-    energyCost: 450,
-    maintenanceCost: 250,
-    salePricePerBox: 2.2,
+    energyCost: 500,
+    maintenanceCost: 300,
   });
 
+  const [salePrice, setSalePrice] = useState(2.5);
+  const [showForm, setShowForm] = useState(false);
+
   const handlePrimaryChange = (key, value) => {
-    setDataPrimary(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+    setPrimaryData(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
   };
 
   const handleSecondaryChange = (key, value) => {
-    setDataSecondary(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
+    setSecondaryData(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
   };
 
   const handleCountryChange = (e) => {
     const selected = e.target.value;
     setCountry(selected);
-    const salary = countrySettings[selected].minSalary;
-    setDataPrimary(prev => ({ ...prev, laborCost: salary }));
-    setDataSecondary(prev => ({ ...prev, laborCost: salary }));
+    setPrimaryData(prev => ({ ...prev, laborCost: countrySettings[selected].minSalary }));
+    setSecondaryData(prev => ({ ...prev, laborCost: countrySettings[selected].minSalary }));
   };
 
   const handleDownload = () => {
@@ -83,44 +81,68 @@ function App() {
     html2pdf().set(opt).from(element).save();
   };
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    alert("Quotation request sent to web@invpack.com (demo).");
+    setShowForm(false);
+  };
+
   const primaryFields = [
-    { label: "Machine Cost", key: "machineCost" },
-    { label: "Installation Cost", key: "installCost" },
-    { label: "Stickpack Cost", key: "materialCost" },
-    { label: "Speed (stick/min)", key: "speed" },
-    { label: "Hours per Day", key: "hours" },
-    { label: "Days per Month", key: "days" },
-    { label: "OEE (%)", key: "oee" },
-    { label: "Units per Box", key: "unitsPerBox" },
-    { label: "Box Price", key: "pricePerBox" },
-    { label: "Monthly Labor Cost", key: "laborCost" },
+    { label: "Primary packaging machine cost", key: "machineCost" },
+    { label: "Commissioning & Trainning cost", key: "installCost" },
+    { label: "Packaging material cost (linear meter)", key: "materialCost" },
+    { label: "Sachet / Stick lenght (mm)", key: "lenght" },
+    { label: "Primary machine production (units/min)", key: "speed" },
+    { label: "Hours per day", key: "hours" },
+    { label: "Days per month", key: "days" },
+    { label: "OEE Primary (%)", key: "oee" },
+    { label: "Monthly Labour Cost (Operator)", key: "laborCost" },
     { label: "Monthly Energy Cost", key: "energyCost" },
-    { label: "Monthly Maintenance", key: "maintenanceCost" },
+    { label: "Monthly Maintenance Cost", key: "maintenanceCost" },
   ];
 
   const secondaryFields = [
-    { label: "Machine Cost", key: "machineCost" },
-    { label: "Installation Cost", key: "installCost" },
-    { label: "Hours per Day", key: "hours" },
-    { label: "Days per Month", key: "days" },
-    { label: "Units per Box", key: "unitsPerBox" },
-    { label: "Box Price", key: "pricePerBox" },
-    { label: "Groupings", key: "groupings" },
-    { label: "OEE (%)", key: "oee" },
-    { label: "Monthly Labor Cost", key: "laborCost" },
+    { label: "Secondary packaging machine cost", key: "machineCost" },
+    { label: "Commissioning & Trainning cost", key: "installCost" },
+    { label: "Hours per day", key: "hours" },
+    { label: "Days per month", key: "days" },
+    { label: "Units per box", key: "unitsPerBox" },
+    { label: "Secondary Packaging Material Unit Price", key: "pricePerBox" },
+    { label: "OEE Secondary (%)", key: "oee" },
+    { label: "Monthly Labor Cost (operator)", key: "laborCost" },
     { label: "Monthly Energy Cost", key: "energyCost" },
-    { label: "Monthly Maintenance", key: "maintenanceCost" },
-    { label: "Sale Price per Box", key: "salePricePerBox" },
+    { label: "Monthly Maintenance Cost", key: "maintenanceCost" },
   ];
 
-  const monthlyStickpacks = dataPrimary.speed * 60 * dataPrimary.hours * dataPrimary.days * (dataPrimary.oee / 100);
-  const monthlyBoxes = monthlyStickpacks / dataPrimary.unitsPerBox;
-  const revenue = monthlyBoxes * dataPrimary.pricePerBox;
-  const operatingCosts = (monthlyStickpacks * dataPrimary.materialCost) + dataPrimary.laborCost + dataPrimary.energyCost + dataPrimary.maintenanceCost;
+  const monthlyStickpacks = primaryData.speed * 60 * primaryData.hours * primaryData.days * (primaryData.oee / 100);
+  const monthlyBoxes = monthlyStickpacks / secondaryData.unitsPerBox;
+  const revenue = monthlyBoxes * secondaryData.pricePerBox;
+  const operatingCosts = (monthlyStickpacks * primaryData.materialCost) + primaryData.laborCost + primaryData.energyCost + primaryData.maintenanceCost;
   const netProfit = revenue - operatingCosts;
-  const totalInvestment = dataPrimary.machineCost + dataPrimary.installCost;
+  const totalInvestment = primaryData.machineCost + primaryData.installCost + secondaryData.machineCost + secondaryData.installCost;
   const annualROI = (netProfit * 12 / totalInvestment) * 100;
   const roiYears = totalInvestment / (netProfit * 12);
+
+  const renderFields = (fields, data, handleChange) => (
+    <div className="bg-white shadow-lg rounded-2xl p-6 grid md:grid-cols-2 gap-6">
+      {fields.map(({ label, key }) => (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-sm font-semibold text-gray-600">{label}</label>
+          <div className="relative">
+            <input
+              type="number"
+              className="border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+              value={data[key]}
+              onChange={(e) => handleChange(key, e.target.value)}
+            />
+            {(label.includes("Cost") || label.includes("Price")) && (
+              <span className="absolute right-3 top-2.5 text-gray-400 text-sm">{currency}</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#f8f8f8] text-[#333] py-10 px-4">
@@ -142,45 +164,29 @@ function App() {
 
         <div className="border-t border-orange-300 pt-6">
           <h2 className="text-2xl font-bold text-orange-600 mb-4">Primary</h2>
-          <div className="bg-white shadow-lg rounded-2xl p-6 grid md:grid-cols-2 gap-6">
-            {primaryFields.map(({ label, key }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-600">{label}</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                    value={dataPrimary[key]}
-                    onChange={(e) => handlePrimaryChange(key, e.target.value)}
-                  />
-                  {label.includes("Cost") || label.includes("Price") ? (
-                    <span className="absolute right-3 top-2.5 text-gray-400 text-sm">{currency}</span>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
+          {renderFields(primaryFields, primaryData, handlePrimaryChange)}
         </div>
 
         <div className="border-t border-orange-300 pt-6">
           <h2 className="text-2xl font-bold text-orange-600 mb-4">Secondary</h2>
-          <div className="bg-white shadow-lg rounded-2xl p-6 grid md:grid-cols-2 gap-6">
-            {secondaryFields.map(({ label, key }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-600">{label}</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    className="border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                    value={dataSecondary[key]}
-                    onChange={(e) => handleSecondaryChange(key, e.target.value)}
-                  />
-                  {label.includes("Cost") || label.includes("Price") ? (
-                    <span className="absolute right-3 top-2.5 text-gray-400 text-sm">{currency}</span>
-                  ) : null}
-                </div>
-              </div>
-            ))}
+          {renderFields(secondaryFields, secondaryData, handleSecondaryChange)}
+        </div>
+
+        <div className="border-t border-orange-300 pt-6">
+          <div className="bg-white shadow-lg rounded-2xl p-6">
+            <label className="text-lg font-bold text-orange-600 mb-1">Sale Price per Box</label>
+            <div className="relative">
+              <input
+                type="number"
+                className="border border-gray-300 rounded-md px-4 py-3 pr-12 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 w-full text-orange-700"
+                value={salePrice}
+                onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)}
+              />
+              <span className="absolute right-3 top-3 text-gray-400 text-sm">{currency}</span>
+            </div>
+            <div className="mt-4 text-gray-800">
+              <strong>Estimated ROI (years):</strong> {roiYears.toFixed(2)}
+            </div>
           </div>
         </div>
 
@@ -193,7 +199,6 @@ function App() {
             <li><strong>Monthly operating costs ({currency}):</strong> {operatingCosts.toFixed(2)}</li>
             <li><strong>Monthly profit ({currency}):</strong> {netProfit.toFixed(2)}</li>
             <li><strong>Annual ROI (%):</strong> {annualROI.toFixed(2)}</li>
-            <li><strong>Estimated ROI (years):</strong> {roiYears.toFixed(2)}</li>
           </ul>
         </div>
 
@@ -205,6 +210,32 @@ function App() {
             Download PDF
           </button>
         </div>
+
+        <div className="text-center">
+          <button
+            onClick={() => setShowForm(true)}
+            className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg"
+          >
+            Ask for quotation
+          </button>
+        </div>
+
+        {showForm && (
+          <div className="bg-white p-6 rounded-lg shadow-lg mt-6">
+            <h3 className="text-xl font-bold mb-4">Request a Quotation</h3>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <input type="text" placeholder="Name" required className="w-full border px-3 py-2 rounded" />
+              <input type="text" placeholder="Surname" required className="w-full border px-3 py-2 rounded" />
+              <input type="email" placeholder="Email" required className="w-full border px-3 py-2 rounded" />
+              <input type="text" placeholder="Company" required className="w-full border px-3 py-2 rounded" />
+              <input type="tel" placeholder="Phone" required className="w-full border px-3 py-2 rounded" />
+              <textarea placeholder="Comments" className="w-full border px-3 py-2 rounded" rows={4}></textarea>
+              <button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg">
+                Send
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
