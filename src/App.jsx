@@ -1,5 +1,6 @@
 import { useState } from "react";
 import html2pdf from 'html2pdf.js';
+import emailjs from '@emailjs/browser';
 
 const countrySettings = {
   "Spain": { currency: "€", minSalary: 1134 },
@@ -53,6 +54,7 @@ function App() {
 
   const [salePrice, setSalePrice] = useState(2.5);
   const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ name: '', surname: '', email: '', company: '', phone: '', comments: '' });
 
   const handlePrimaryChange = (key, value) => {
     setPrimaryData(prev => ({ ...prev, [key]: parseFloat(value) || 0 }));
@@ -83,7 +85,11 @@ function App() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    alert("Quotation request sent to web@invpack.com (demo).");
+
+    emailjs.send('service_r8inm4f', 'template_j8k5jka', formData, '3ZqnJZwzzNr2yA-Le')
+      .then(() => alert('Quotation request sent to web@invpack.com.'))
+      .catch(() => alert('There was an error sending the quotation.'));
+
     setShowForm(false);
   };
 
@@ -132,7 +138,7 @@ function App() {
             <input
               type="number"
               className="border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-              value={data[key]}
+              value={data[key] || ''}
               onChange={(e) => handleChange(key, e.target.value)}
             />
             {(label.includes("Cost") || label.includes("Price")) && (
@@ -163,7 +169,15 @@ function App() {
         </div>
 
         <div className="border-t border-orange-300 pt-6">
-          <h2 className="text-2xl font-bold text-orange-600 mb-4">Primary</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-orange-600">Primary</h2>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
+            >
+              Ask for quotation
+            </button>
+          </div>
           {renderFields(primaryFields, primaryData, handlePrimaryChange)}
         </div>
 
@@ -211,29 +225,23 @@ function App() {
           </button>
         </div>
 
-        <div className="text-center">
-          <button
-            onClick={() => setShowForm(true)}
-            className="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg"
-          >
-            Ask for quotation
-          </button>
-        </div>
-
         {showForm && (
-          <div className="bg-white p-6 rounded-lg shadow-lg mt-6">
-            <h3 className="text-xl font-bold mb-4">Request a Quotation</h3>
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              <input type="text" placeholder="Name" required className="w-full border px-3 py-2 rounded" />
-              <input type="text" placeholder="Surname" required className="w-full border px-3 py-2 rounded" />
-              <input type="email" placeholder="Email" required className="w-full border px-3 py-2 rounded" />
-              <input type="text" placeholder="Company" required className="w-full border px-3 py-2 rounded" />
-              <input type="tel" placeholder="Phone" required className="w-full border px-3 py-2 rounded" />
-              <textarea placeholder="Comments" className="w-full border px-3 py-2 rounded" rows={4}></textarea>
-              <button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg">
-                Send
-              </button>
-            </form>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative">
+              <button onClick={() => setShowForm(false)} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900">&times;</button>
+              <h3 className="text-xl font-bold mb-4">Request a Quotation</h3>
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <input type="text" placeholder="Name" required className="w-full border px-3 py-2 rounded" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <input type="text" placeholder="Surname" required className="w-full border px-3 py-2 rounded" onChange={(e) => setFormData({ ...formData, surname: e.target.value })} />
+                <input type="email" placeholder="Email" required className="w-full border px-3 py-2 rounded" onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                <input type="text" placeholder="Company" required className="w-full border px-3 py-2 rounded" onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
+                <input type="tel" placeholder="Phone" required className="w-full border px-3 py-2 rounded" onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                <textarea placeholder="Comments" className="w-full border px-3 py-2 rounded" rows={4} onChange={(e) => setFormData({ ...formData, comments: e.target.value })}></textarea>
+                <button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg">
+                  Send
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
